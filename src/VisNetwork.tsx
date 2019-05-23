@@ -1,5 +1,7 @@
 import React, { Component, createRef } from "react";
 import {DataSet, Network} from 'vis';
+import {Edge} from './SolutionVisualizer'
+import { node, number } from "prop-types";
 
 var nodes = new DataSet([
     {id: 1, label: '1'},
@@ -11,7 +13,7 @@ var nodes = new DataSet([
 
 // create an array with edges
 var edges = new DataSet([
-    {from: 1, to: 3},
+    {from: 1, to: 3, color: {color: 'red', highlight: 'red'}},
     {from: 1, to: 2},
     {from: 2, to: 4},
     {from: 2, to: 5}
@@ -39,21 +41,54 @@ var options = {
           blockShifting: true,
           edgeMinimization: true,
           parentCentralization: true,
-          direction: 'UD',        // UD, DU, LR, RL
-          sortMethod: 'hubsize'   // hubsize, directed
+          direction: 'UD',
+          sortMethod: 'hubsize'
         }
       },
   }
 
-export class VisNetwork extends Component
+interface Props {
+  edges: Edge[];
+  nodesCount: number;
+  path: number[];
+}
+
+export class VisNetwork extends Component<Props>
 {
     containerRef = createRef<HTMLDivElement>();
 
     componentDidMount(){
-        var network = new Network(this.containerRef.current!!, data, options);
+      const {nodesCount, edges, path} = this.props;
+        var network = new Network(this.containerRef.current!!, getData(nodesCount, edges, path), options);
     }
 
     render() {
         return <div ref={this.containerRef} style={{ height: '100%' }}></div>;
     }
 };
+
+const getData = (nodesCount: number, edges: Edge[], path: number[]) => {
+  const nodes = new DataSet(
+    Array.from(Array(nodesCount).keys()).map((node: number) => ({
+      id: node,
+      label: node.toString()
+    })
+  ))
+
+  const graphEdges = new DataSet(
+    edges.map((edge: Edge) => ({
+      from: edge.from,
+      to: edge.to,
+      label: edge.weight.toString(),
+      color: (Math.abs(path.indexOf(edge.from) - path.indexOf(edge.to)) == 1) ? {
+        color: 'red',
+        highlight: 'red'
+      } : undefined
+    }))
+  )
+
+  return ({
+    nodes: nodes,
+    edges: graphEdges
+  });
+}
