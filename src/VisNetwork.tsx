@@ -59,7 +59,7 @@ export class VisNetwork extends Component<Props>
 
     componentDidMount(){
       const {nodesCount, edges, path} = this.props;
-        var network = new Network(this.containerRef.current!!, getData(nodesCount, edges, path), options);
+      var network = new Network(this.containerRef.current!!, getData(nodesCount, edges, path), options);
     }
 
     render() {

@@ -9,15 +9,6 @@ import Container from '@material-ui/core/Container';
 import { VisNetwork } from './VisNetwork';
 import FileReaderInput from 'react-file-reader-input'
 
-const handleChange = (e: any, results: any) => {
-  const reader = new FileReader()
-  reader.onload = () => console.log(reader.result)
-  results.forEach((result: any) => {
-    const [e, file] = result;
-    reader.readAsText(file)
-  });
-}
-
 export interface Edge {
   from: number;
   to: number;
@@ -35,14 +26,9 @@ interface State {
 const initialState = {
   isGraphLoaded: false,
   isResultLoaded: false,
-  edges: [
-      {from: 0, to: 1, weight: 2},
-      {from: 1, to: 2, weight: 2},
-      {from: 2, to: 3, weight: 2},
-      {from: 3, to: 0, weight: 2},
-     ],
-  nodesCount: 4,
-  path: [0,1,2,3]
+  edges: [],
+  nodesCount: -1,
+  path: []
 }
 
 export class SolutionVisualizer extends React.Component<{classes: any}, State> {
@@ -50,13 +36,30 @@ export class SolutionVisualizer extends React.Component<{classes: any}, State> {
   state = initialState;
 
   onGraphLoaded = (e: any, results: any) => {
-    this.setState({isGraphLoaded: true, isResultLoaded: false})
-    console.log("Graph loaded");
+    const reader = new FileReader()
+    reader.onload = () => { 
+        const {edges, nodesCount} = parseGraph(reader.result as string);
+        this.setState({
+            edges,
+            nodesCount,
+            isGraphLoaded: true,
+            isResultLoaded: false
+        })
+    }
+    const [ex, file]= results[0];
+    reader.readAsText(file)
   }
 
   onResultLoaded = (e: any, results: any) => {
-    this.setState({isResultLoaded: true})
-    console.log("Result loaded");
+    const reader = new FileReader()
+    reader.onload = () => { 
+        this.setState({
+            path: parsePath(reader.result as string),
+            isResultLoaded: true
+        })
+    }
+    const [ex, file]= results[0];
+    reader.readAsText(file)
   }
 
   render() {
@@ -100,7 +103,7 @@ export class SolutionVisualizer extends React.Component<{classes: any}, State> {
         <Container className={classes.cardGrid} maxWidth="md">
           <Card className={classes.card}>
             <CardContent className={classes.cardContent}>
-                {this.state.isGraphLoaded && this.state.isResultLoaded && (
+                {this.state.isGraphLoaded && this.state.isResultLoaded && this.state.path.length > 0 && (
                     <VisNetwork
                         edges={this.state.edges}
                         nodesCount={this.state.nodesCount}
@@ -114,4 +117,41 @@ export class SolutionVisualizer extends React.Component<{classes: any}, State> {
     </React.Fragment>
   );
     }
+}
+
+interface Graph {
+    edges: Edge[];
+    nodesCount: number;
+}
+
+const parseGraph = (graphText: string): Graph => {
+    const edges: Edge[] = [];
+    let maxNode = -1;
+
+    for (const line of graphText.split(/[\r\n]+/)){
+        const edgeData = line.split(' ');
+        const from = Number.parseInt(edgeData[0]);
+        const to = Number.parseInt(edgeData[1]);
+
+        if (from > maxNode)
+            maxNode = from;
+        if (to > maxNode)
+            maxNode = to;
+
+        edges.push({
+            from,
+            to,
+            weight: Number.parseInt(edgeData[2])
+        })
+    }
+
+    return ({
+        edges,
+        nodesCount: maxNode + 1 
+    })
+}
+
+const parsePath = (pathText: string) => {
+    const path = pathText.split(/[\r\n]+/)[0];
+    return path.split(' ').map(node => Number.parseInt(node));
 }
