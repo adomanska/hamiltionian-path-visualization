@@ -42,7 +42,7 @@ var options = {
           direction: 'UD',        // UD, DU, LR, RL
           sortMethod: 'hubsize'   // hubsize, directed
         }
-      }
+      },
   }
 
 export class VisNetwork extends Component
@@ -54,6 +54,6 @@ export class VisNetwork extends Component
     }
 
     render() {
-        return <div ref={this.containerRef} style={{ height: 1000 }}></div>;
+        return <div ref={this.containerRef} style={{ height: '100%' }}></div>;
     }
 };
